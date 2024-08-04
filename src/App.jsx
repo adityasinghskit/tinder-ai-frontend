@@ -42,6 +42,19 @@ const getConversation = async (conversationId) => {
   return response.json();
 }
 
+const addMessageToConversation = async ( authorId, conversationId, message) => {
+  const response = await fetch('http://localhost:9000/conversations/'+ conversationId, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({authorId: authorId, messageText: message})
+  });
+  if(!response.ok){
+    throw new Error('Failed to save swipe');
+  }
+}
+
 const App = () => {
 const [currentScreen, setCurrentScreen] = useState("profile");
 const [currentProfile, setCurrentProfile] = useState(null);
@@ -74,10 +87,15 @@ const [currentMatchAndChat, setCurrentMatchAndChat] = useState({profile:{}, chat
     }
   }
 
+  const handleSend = async (author, conversationId, text) => {
+    await addMessageToConversation("user", conversationId, text);
+    await openConversation(author, conversationId);
+  };
+
   const openConversation = async(profile, conversationId) => {
       const conversations = await getConversation(conversationId);
       console.log("conversations: " + JSON.stringify(conversations));
-      setCurrentMatchAndChat({profile: profile, chat: conversations.messages});
+      setCurrentMatchAndChat({profile: profile, chat: conversations});
       setCurrentScreen("chat");
   }
 
@@ -93,7 +111,7 @@ const [currentMatchAndChat, setCurrentMatchAndChat] = useState({profile:{}, chat
       case "matches":
         return <Matches openConversation={openConversation} matches={matches}/>;
       case "chat":
-        return <Chats currentMatchAndChat={currentMatchAndChat}/>;
+        return <Chats currentMatchAndChat={currentMatchAndChat} handleSend={handleSend}/>;
     }
   };
 
